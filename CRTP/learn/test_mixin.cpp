@@ -4,6 +4,9 @@
 #include <iostream>
 
 namespace minxin_1 {
+    /**
+     * @brief Number is a base class
+     */
     struct Number {
         typedef int value_type; // 这里只是定义了一个类型,只不过这个类型时结构体成员
         int n;
