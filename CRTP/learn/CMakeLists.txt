@@ -1,0 +1,8 @@
+message(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
+file(GLOB_RECURSE mySourceFile CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+message(STATUS ${mySourceFile})
+#set(CMAKE_CXX_FLAGS -lboost_system)
+foreach (source IN ITEMS ${mySourceFile})
+    get_filename_component(name "${source}" NAME_WLE)
+    add_executable(${name} ${source})
+endforeach ()
