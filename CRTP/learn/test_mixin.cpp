@@ -3,9 +3,11 @@
 //
 #include <iostream>
 
-namespace minxin_1 {
+namespace mixin_1 {
     /**
      * @brief Number is a base class
+     * @note mixin 是一组交叉继承方式,可以看出undoable和Redoable可以说是一个组合
+     * @note 只不过最后通过交叉继承方式让Redoable获得所有方法
      */
     struct Number {
         typedef int value_type; // 这里只是定义了一个类型,只不过这个类型时结构体成员
@@ -122,7 +124,7 @@ namespace CRTP_minix {
 
 namespace mytest {
     void test1() {
-        minxin_1::ReUndoableNumber mynum;
+        mixin_1::ReUndoableNumber mynum;
 
         mynum.set(42);
         mynum.set(84);
