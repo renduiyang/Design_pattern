@@ -60,7 +60,7 @@ namespace concept_test {
 
     /**
      *
-     * @tparam TImpl
+     * @tparam TImpl 使用IsANotifier来约束模板参数
      * @param impl
      * @param msg
      */
@@ -81,12 +81,14 @@ namespace concept_test {
         }
     };
 
-    
+    /**
+     *  concept只是限制参数有没有具体方法  --t只是判断 参数t是否具有加减的方法
+     *
+     **/
     template<typename T>
     concept Decrementable = requires(T t)
     {
         --t;
-        std::cout << "t is " << t << std::endl;
     };
 
     /**
@@ -96,7 +98,7 @@ namespace concept_test {
      * @param t2 
      */
     template<Decrementable T>
-    void f(T t,T t2) {
+    void f(T t, T t2) {
         std::cout << "Decrementable" << std::endl;
         ++t;
         std::cout << t << std::endl;
@@ -106,13 +108,55 @@ namespace concept_test {
     void test2() {
         SMSNotifier notifier;
         Alert(notifier, "hello world");
-        f(42,0);
+        f(42, 0);
+    }
+}
+
+namespace attribute_test {
+    class person {
+    private:
+        int age;
+
+    public:
+        void set_age(int age) {
+            this->age = age;
+        }
+
+        int get_age() const {
+            return age;
+        }
+    };
+
+    class person2 {
+    private:
+        int _age;
+
+    public:
+        int age() const {
+            return this->_age;
+        }
+
+        void age(int _age) {
+            this->_age = _age;
+        }
+    };
+
+    void test3() {
+        person p1;
+        p1.set_age(10);
+        std::cout << p1.get_age() << std::endl;
+        std::cout << "-----------" << std::endl;
+        person2 p2;
+        p2.age(20);
+        std::cout << p2.age() << std::endl;
     }
 }
 
 int main() {
-    static_test::test1();
-    std::cout << "----------" << std::endl;
-    concept_test::test2();
+    // static_test::test1();
+    // std::cout << "----------" << std::endl;
+    // concept_test::test2();
+    // std::cout << "----------" << std::endl;
+    attribute_test::test3();
     return 0;
 }
