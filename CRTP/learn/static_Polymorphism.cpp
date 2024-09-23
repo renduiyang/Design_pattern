@@ -127,6 +127,10 @@ namespace attribute_test {
         }
     };
 
+    /**
+     * @brief 这个是属性访问器的写法
+     * @note 借助了函数重载的方法  实现属性访问器
+     */
     class person2 {
     private:
         int _age;
