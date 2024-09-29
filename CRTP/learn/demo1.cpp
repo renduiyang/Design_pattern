@@ -36,11 +36,11 @@ struct specification {
 
 /**
  * @brief 过滤器  也是一个模板类型
- * @tparam T 传入产品参数
+ * @tparam T 传入产品参数 &&为万能引用  涉及到运算符重载则需要使用万能引用转发
  */
 template<typename T>
 struct Filter {
-    virtual std::vector<T *> filter(std::vector<T *> items, specification<T> &spec) const =0;
+    virtual std::vector<T *> filter(std::vector<T *> items, specification<T> &&spec) const =0;
 };
 
 
@@ -48,7 +48,7 @@ struct Filter {
  * @brief 实例化过滤器  实现模板方法(虚函数)
  */
 struct BatterFilter : Filter<product> {
-    std::vector<product *> filter(std::vector<product *> items, specification<product> &spec) const override {
+    std::vector<product *> filter(std::vector<product *> items, specification<product> &&spec) const override {
         std::vector<product *> result;
         for (auto &value: items) {
             if (spec.is_satisfied(value)) {
@@ -107,6 +107,13 @@ struct AndSpectification : specification<T> {
     }
 };
 
+
+template<typename T>
+AndSpectification<T> operator&&(specification<T> &first, specification<T> &second) {
+    return {first, second};
+}
+
+
 void test1() {
     product apple{"apple", Color::red, Size::small};
     product tree{"tree", Color::green, Size::large};
@@ -116,8 +123,8 @@ void test1() {
     BatterFilter bf;
     ColorSpectification green(Color::green);
     SizeSpectification large(Size::large);
-    AndSpectification<product> and_spec(large, green);
-    auto green_things = bf.filter(all, and_spec);
+    // AndSpectification<product> and_spec(large, green);
+    auto green_things = bf.filter(all, green && large);
     for (const auto &value: green_things) {
         std::cout << value->name << std::endl;
     }
