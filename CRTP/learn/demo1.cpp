@@ -22,16 +22,31 @@ struct product {
     Size size;
 };
 
+
+/**
+ * @brief 使用分布式原则  将过滤器判断与过滤器本身分隔
+ * @tparam T 模板形参  表示过滤器类型  传入产品参数
+ * @note 这里使用使用虚函数是为了后面的多态性 由子类实现这个函数
+ */
 template<typename T>
 struct specification {
     virtual bool is_satisfied(T *item) =0;
 };
 
+
+/**
+ * @brief 过滤器  也是一个模板类型
+ * @tparam T 传入产品参数
+ */
 template<typename T>
 struct Filter {
     virtual std::vector<T *> filter(std::vector<T *> items, specification<T> &spec) const =0;
 };
 
+
+/**
+ * @brief 实例化过滤器  实现模板方法(虚函数)
+ */
 struct BatterFilter : Filter<product> {
     std::vector<product *> filter(std::vector<product *> items, specification<product> &spec) const override {
         std::vector<product *> result;
@@ -44,6 +59,10 @@ struct BatterFilter : Filter<product> {
     }
 };
 
+
+/**
+ * @brief 颜色过滤器
+ */
 struct ColorSpectification : specification<product> {
     Color _color;
 
@@ -55,6 +74,10 @@ struct ColorSpectification : specification<product> {
     }
 };
 
+
+/**
+ * @brief 大小过滤器
+ */
 struct SizeSpectification : specification<product> {
     Size _size;
 
@@ -66,6 +89,10 @@ struct SizeSpectification : specification<product> {
     }
 };
 
+/**
+ * @brief 组合条件过滤器
+ * @tparam T 产品类型  也是一个模板类
+ */
 template<typename T>
 struct AndSpectification : specification<T> {
     specification<T> &_first;
