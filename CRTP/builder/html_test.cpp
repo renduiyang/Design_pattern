@@ -7,6 +7,7 @@
 #include <vector>
 #include <sstream>
 #include <memory>
+#include <random>
 using namespace std;
 
 namespace origin_demo {
@@ -209,8 +210,35 @@ namespace pointer_demo {
     // }
 }
 
+void mytest() {
+    // 初始化随机数生成器
+    // 基于硬件的随机数
+    std::random_device rd;
+    // 使用获取的随机数初始化Mersenne Twister 19937随机数生成器gen。此生成器常用于产生伪随机数序列。
+    std::mt19937 gen(rd());
+
+    // 定义一个均匀分布
+    std::uniform_int_distribution<> dis(1, 100); // 生成 1 到 100 的整数
+    // std::uniform_real_distribution<>：生成指定范围内的浮点数或双精度数的均匀分布。
+    // std::normal_distribution<>：生成遵循正态分布的浮点数。
+    // std::bernoulli_distribution：生成伯努利分布的布尔值。
+    // std::binomial_distribution<>：生成二项分布的整数。
+    // std::poisson_distribution<>：生成泊松分布的整数。
+
+    vector<int> box;
+    // 生成一个随机数
+    for (int i = 0; i < 10; ++i) {
+        int random_number = dis(gen);
+        box.push_back(random_number);
+    }
+    for (const auto& value : box) {
+            cout << value << " ";
+    }
+}
+
 int main() {
-    pointer_demo::demo();
+    // pointer_demo::demo();
+    mytest();
     // origin_demo::demo();
     return 0;
 }
