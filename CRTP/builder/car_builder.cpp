@@ -253,6 +253,10 @@ public:
     }
 };
 
+/**
+ * @brief 
+ * @return
+ */
 Vehicle_Builder Vehicle::create() {
     auto vehicle = make_unique<Vehicle>();
     return Vehicle_Builder(vehicle);
@@ -290,7 +294,7 @@ int main() {
             .vehicle_features().addFeature("skylight").addSpecification("transmission", "automatic").
             addSafetyFeature("ABS")
             .owner_information().addPreviousOwner("johnDoe").addOwnerDetail("currentCarOwner", "janeDoe");
-
+    
     vehicle.printVehicleInfo();
 
     return 0;
