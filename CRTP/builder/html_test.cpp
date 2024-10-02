@@ -115,7 +115,7 @@ namespace origin_demo {
 
         printf("------- \n");
         // 这里使用指针链接会出现错误  name传递不进去
-        auto builder2 = HtmlElement::build("ul")
+        HtmlBuilder builder2 = HtmlElement::build("ul")
                 ->add_child("li", "hello").add_child("li", "world");
         cout << builder2.str() << endl;
 
@@ -125,10 +125,92 @@ namespace origin_demo {
 }
 
 namespace pointer_demo {
+    struct htmlBuilder;
 
+    struct htmlElement {
+        string name;
+        string text;
+        vector<htmlElement> elements;
+        const size_t indent_size = 2;
+
+        htmlElement() {
+        }
+
+        htmlElement(const string &name, const string &text)
+            : name(name),
+              text(text) {
+        }
+
+        string str(int indent = 0) const {
+            ostringstream oss;
+            string i(indent_size * indent, ' ');
+            oss << i << "<" << name << ">" << endl;
+            if (text.size() > 0)
+                oss << string(indent_size * (indent + 1), ' ') << text << endl;
+
+            for (const auto &e: elements)
+                oss << e.str(indent + 1);
+
+            oss << i << "</" << name << ">" << endl;
+            return oss.str();
+        }
+
+        static unique_ptr<htmlBuilder> build(const string &root_name, const string &root_text);
+    };
+
+
+    struct htmlBuilder {
+        unique_ptr<htmlElement> root;
+
+        htmlBuilder(unique_ptr<htmlElement> &value): root(std::move(value)) {
+        }
+
+        // htmlBuilder(const string &root_name,const string& root_text):root(make_unique<htmlElement>(root_name,root_text)){}
+        htmlBuilder &add_element(const string &name, const string &text) {
+            htmlElement e{name, text};
+            root->elements.emplace_back(e);
+            return *this;
+        }
+
+        std::string str() const {
+            return root->str();
+        }
+
+        operator htmlElement() const {
+            return std::move(*root);
+        }
+
+        operator htmlElement *() const {
+            return root.get();
+        }
+
+        explicit operator unique_ptr<htmlElement>() { return std::move(root); }
+    };
+
+    // 返回值类型为htmlBuilder 时可以直接return htmlBuilder(element_ptr);
+    unique_ptr<htmlBuilder> htmlElement::build(const string &root_name, const string &root_text) {
+        auto element_ptr = make_unique<htmlElement>(root_name, root_text);
+        // return htmlBuilder(element_ptr);
+        return make_unique<htmlBuilder>(element_ptr);
+    }
+
+    void demo() {
+        //这里使用operator htmlElement()自定义操作符将 htmlBuilder 转换成 htmlElement
+        htmlElement html = htmlElement::build("ul", "good")
+                ->add_element("li", "hello")
+                .add_element("li", "world");
+
+        cout << html.str() << endl;
+    }
+
+    // void demo2() {
+    //     htmlElement builder = htmlElement::build("ul", "good")
+    //     .add_element("li", "good");
+    // }
 }
 
 int main() {
-    origin_demo::demo();
+    pointer_demo::demo();
+    // origin_demo::demo();
     return 0;
 }
