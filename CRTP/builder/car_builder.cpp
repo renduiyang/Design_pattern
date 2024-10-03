@@ -100,6 +100,7 @@ protected:
     unique_ptr<Vehicle> vehicle;
 
     // 这里实现构建器抽象基类的时候传入unique_ptr指针  由std::move移交权限给成员对象
+    // unique_ptr无法直接使用值传递  必须借助std::move 或者 引用传递
     explicit Vehicle_Builder_Base(unique_ptr<Vehicle> &vehicle) : vehicle(std::move(vehicle)) {
     }
 
@@ -294,7 +295,7 @@ int main() {
             .vehicle_features().addFeature("skylight").addSpecification("transmission", "automatic").
             addSafetyFeature("ABS")
             .owner_information().addPreviousOwner("johnDoe").addOwnerDetail("currentCarOwner", "janeDoe");
-    
+
     vehicle.printVehicleInfo();
 
     return 0;
