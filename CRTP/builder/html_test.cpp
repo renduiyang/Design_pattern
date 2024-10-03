@@ -231,8 +231,8 @@ void mytest() {
         int random_number = dis(gen);
         box.push_back(random_number);
     }
-    for (const auto& value : box) {
-            cout << value << " ";
+    for (const auto &value: box) {
+        cout << value << " ";
     }
 }
 
