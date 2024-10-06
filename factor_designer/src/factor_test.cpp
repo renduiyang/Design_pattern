@@ -3,7 +3,7 @@
 //
 #include <iostream>
 #include <memory>
-#include<ostream>
+#include <ostream>
 #include <vector>
 
 struct point2D {
