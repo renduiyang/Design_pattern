@@ -21,6 +21,10 @@ public:
                                                                   height(height) {
     }
 
+    /**
+     * @brief 重点在这里  使用虚析构函数可以明确表示多态性
+     * @note  如果使用dynamic_pointer_cast 会检查多态性 除非有其他虚函数 否则最直接的就是利用虚析构函数显示表明多态性
+     */
     virtual ~wall() {
         std::cout << "destruct wall\n";
     }
@@ -29,6 +33,12 @@ public:
         return false;
     }
 
+    /**
+     * @brief << 重载运算符  返回类型一定是std::ostream&
+     * @param os
+     * @param w
+     * @return
+     */
     friend std::ostream &operator <<(std::ostream &os, const wall &w) {
         return os << "wall from " << "(" << w.start.x << w.start.y << ")" << " to " << "(" << w.start.x << w.start.y <<
                ")" << " with elevation " << w.elevation << " and height "
@@ -58,6 +68,15 @@ class solidWall : public wall {
     material material_;
 
 protected:
+    /**
+     * @brief 这里构造函数是proteced类型  make_shared和make_unique是无法使用protected类型的构造函数
+     * @param start
+     * @param end
+     * @param elevation
+     * @param height
+     * @param width
+     * @param material_
+     */
     solidWall(point2D start, point2D end, int elevation, int height, int width, material material_): wall(start, end,
             elevation, height),
         width(width), material_(material_) {
@@ -79,7 +98,7 @@ public:
      * @param elevation 海拔
      * @param height 高度
      * @return std::unique_ptr 返回指向solidWall的unique_ptr指针
-     * @note make_unique can not use protected constructor
+     * @note make_unique无法使用protected类型的构造函数,因此需要使用普通构造函数构造成功后转换为unique_ptr
      */
     static std::unique_ptr<solidWall> creat_partition(point2D start, point2D end, int elevation, int height) {
         return std::make_unique<solidWall>(solidWall(start, end, elevation, height, 120, material::brick_wall));
@@ -121,6 +140,10 @@ enum class wallType {
     partition
 };
 
+
+/**
+ * @brief 工厂类  将构造全部封装起来 对外只保留一个接口
+ */
 class wallFactory {
     static std::vector<std::weak_ptr<wall> > walls;
 
@@ -165,6 +188,16 @@ protected:
     }
 
 public:
+    /**
+     * @brief
+     * @param type
+     * @param start
+     * @param end
+     * @param elevation
+     * @param height
+     * @return std::shared_ptr<wall> 类型,因为这个函数返回值有的是solidWall有的是wall类型
+     * @note 因为直接返回父类shared_ptr指针 所以此处明确声明返回值类型为std::shared_ptr<wall>  !!不能使用auto
+     */
     static std::shared_ptr<wall> create_wall(wallType type, point2D start, point2D end, int elevation,
                                              int height) {
         switch (type) {
@@ -193,13 +226,14 @@ void test2() {
     const auto base_wall = wallFactory::create_wall(wallType::basic, {0, 0}, {1, 1}, 0, 1);
     const auto main_wall = wallFactory::create_wall(wallType::main, {1, 1}, {1, 1}, 0, 1);
     const auto partition_wall = wallFactory::create_wall(wallType::partition, {0, 0}, {1, 1}, 0, 1);
-    // std::cout << *base_wall;
-    // std::cout << *main_wall;
     if (main_wall) {
+        // 因为 solidWall 是 wall 的子类 所以可以转换为shared_ptr<solidWall>
+        // 此处转换之后 会返回一个shared_ptr<solidWall>
         auto ptr = std::dynamic_pointer_cast<solidWall>(main_wall);
         if (ptr == nullptr) {
             std::cout << "error" << "\n";
         }
+        // 如果要使用这个智能指针需要使用*  因为不带* 这个变量只是一个地址
         std::cout << *std::dynamic_pointer_cast<solidWall>(main_wall);
     }
 }
