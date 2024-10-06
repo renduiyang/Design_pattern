@@ -87,7 +87,7 @@ public:
         return solidWall(start, end, elevation, height, 375, material::gas_wall);
     }
 
-    ~solidWall() {
+    ~solidWall() override {
         std::cout << "destruct solid wall\n";
     }
 
@@ -237,6 +237,69 @@ void test2() {
         std::cout << *std::dynamic_pointer_cast<solidWall>(main_wall);
     }
 }
+
+//----------嵌套工厂---------------
+namespace NestFactory {
+    class Point2D {
+    public:
+        int x;
+        int y;
+    };
+
+    class Wall {
+        Point2D start; // 墙的起始点
+        Point2D end; // 墙的终止点
+        int elevation; // 墙的海拔，相对于某个基线的高度
+        int height; // 墙的高度
+    public:
+        Wall(Point2D start, Point2D end, int elevation, int height)
+            : start(start), end{end}, elevation{elevation}, height{height} {
+        }
+
+        // 判断墙体是否相交
+        bool intersects(const Wall &wall) {
+            return false;
+        }
+
+        virtual void print(std::ostream &os) const {
+            os << "start: " << start.x << ", " << start.y
+                    << "\nend: " << end.x << ", " << end.y
+                    << "\nelevation: " << elevation
+                    << "\nheight: " << height;
+        }
+
+        friend std::ostream &operator<<(std::ostream &os, const Wall &wall) {
+            wall.print(os);
+            return os;
+        }
+
+    private:
+        class BasicWallFactory {
+            // 嵌套工厂中针对外部static成员 内部需要声明一个友元类 确保外部能访问到
+            friend class Wall;
+
+            BasicWallFactory() = default;
+
+        public:
+            std::shared_ptr<Wall> create(const Point2D start,
+                                         const Point2D end,
+                                         const int elevation, const int height) {
+                Wall *wall = new Wall(start, end, elevation, height);
+                return std::shared_ptr<Wall>(wall);
+            }
+        };
+
+    public:
+        static BasicWallFactory factory;
+    };
+
+    Wall::BasicWallFactory Wall::factory{};
+    // Wall::BasicWallFactory Wall::factory;
+    void testNestFactory() {
+        auto basic = Wall::factory.create({0, 0}, {5000, 6666}, 0, 4444);
+        std::cout << *basic << "\n";
+    }
+}; // NestFactory end
 
 int main() {
     testFactoryMethod();
