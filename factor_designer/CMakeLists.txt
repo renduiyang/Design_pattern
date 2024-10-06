@@ -5,6 +5,8 @@ project(factor_designer)
 set(CMAKE_CXX_STANDARD 20)
 
 set(src_path src)
+find_package(Qt5 COMPONENTS Widgets Core Sql REQUIRED)
+
 
 # GLOB_RECURSE 和 GLOB 的主要区别在于搜索文件的方式：
 # GLOB 只会搜索当前目录下 不会去搜寻子目录下文件
@@ -17,4 +19,5 @@ message("file is ${mySourceFile}, source dir is ${CMAKE_SOURCE_DIR} ")
 foreach (source IN ITEMS ${mySourceFile})
     get_filename_component(name ${source} NAME_WLE)
     add_executable(${name} ${source})
+    target_link_libraries(${name} Qt5::Widgets Qt5::Sql Qt5::Core)
 endforeach ()
