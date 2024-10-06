@@ -129,7 +129,7 @@ protected:
         if (elevation < 0) {
             return {};
         }
-        auto this_wall=std::make_unique<solidWall>(solidWall::creat_main(start, end, elevation, height));
+        auto this_wall = std::make_unique<solidWall>(solidWall::creat_main(start, end, elevation, height));
         // auto this_wall = std::make_unique<solidWall>(solidWall(start, end, elevation, height, 375, material::gas_wall));
         // 在创建墙体时，检查是否有其他墙体与当前墙体相交 , 如果存在相交情况则不会构建墙体
         // auto temp_ptr = std::make_shared<solidWall>(start, end, elevation, height, 375, material::gas_wall);
