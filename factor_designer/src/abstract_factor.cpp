@@ -82,6 +82,13 @@ public:
         return drink;
     }
 
+    /**
+     * @brief 使用静态方法直接生产饮品
+     * @param name 利用name来判断生产哪种类型饮品
+     * @return
+     * @note 这里是静态方法, std::unique_ptr<hotDrink> drink 这个表示声明drink是hotDrink类型的unique_ptr指针
+     * @note 因为hotDrink是一个虚基类 这里不能直接使用std::make_unique<>()去实例化
+     */
     static std::unique_ptr<hotDrink> make_drink_s(const std::string &name) {
         std::unique_ptr<hotDrink> drink;
         if (name == "tea") {
@@ -98,6 +105,6 @@ int main() {
     auto tea_drink = make_drink("tea");
     drinkFactor df;
     auto coffee_drink = df.make_drink("coffee");
-    // auto drink_s = drinkFactor::make_drink_s("tea");
+    auto drink_s = drinkFactor::make_drink_s("tea");
     return 0;
 }
