@@ -36,6 +36,25 @@ endforeach ()
 ```
 
 
+
+```cmake
+# cmake选择性的引入boost动态库或者静态库
+option(USE_STATIC_BOOST "Build with static BOOST libraries instead of dynamic" NO)
+if(USE_STATIC_BOOST)
+   unset(Boost_LIBRARIES)
+   message(WARNING "Linking against boost static libraries")
+   set(Boost_USE_STATIC_LIBS ON)
+   set(Boost_USE_MULTITHREADED ON)
+   find_package(Boost REQUIRED COMPONENTS thread program_options system)
+else(USE_STATIC_BOOST)
+   unset(Boost_LIBRARIES)
+   message(WARNING "Linking against boost dynamic libraries")
+   set(Boost_USE_STATIC_LIBS OFF)
+   set(Boost_USE_MULTITHREADED ON)
+   find_package(Boost REQUIRED COMPONENTS thread program_options system)
+endif(USE_STATIC_BOOST)
+```
+
 ```c++
 #include <iostream>
 #include <string>
