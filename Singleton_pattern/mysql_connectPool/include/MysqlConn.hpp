@@ -5,9 +5,7 @@
 #ifndef MYSQLCONN_HPP
 #define MYSQLCONN_HPP
 #include <QSqlDatabase>
-#include <QSqlQuery>
-
-
+#include <QtSql>
 
 
 #endif //MYSQLCONN_HPP

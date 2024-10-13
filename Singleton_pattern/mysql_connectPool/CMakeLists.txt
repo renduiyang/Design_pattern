@@ -4,6 +4,7 @@ link_directories(lib)
 
 set(goole_Test ON)
 set(goole_Test_Path D:/workspace/environment/gooletest_static)
+set(mysql_Path D:/workspace/environment/mysql5.7)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
@@ -16,6 +17,9 @@ file(GLOB_RECURSE mytestFile CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/
 
 message("file is ${mySourceFile}")
 
+include_directories(${mysql_Path}/include)
+link_directories(${mysql_Path}/lib)
+
 if (goole_Test)
     message("goole_test on")
     include_directories(${goole_Test_Path}/include)
@@ -24,7 +28,7 @@ if (goole_Test)
         get_filename_component(name ${source} NAME_WLE)
         add_executable(${name} ${source})
         message("name is ${name}")
-        target_link_libraries(${name} Qt5::Widgets Qt5::Sql Qt5::Core gmock gtest gtest_main)
+        target_link_libraries(${name} Qt5::Widgets Qt5::Sql Qt5::Core gmock gtest gtest_main mysql)
         enable_testing()
         add_test(NAME ${name} COMMAND ${name})
     endforeach ()
@@ -36,6 +40,6 @@ else ()
         get_filename_component(name ${source} NAME_WLE)
         add_executable(${name} ${source})
         message("name is ${name}")
-        target_link_libraries(${name} Qt5::Widgets Qt5::Sql Qt5::Core)
+        target_link_libraries(${name} Qt5::Widgets Qt5::Sql Qt5::Core mysql)
     endforeach ()
 endif ()
