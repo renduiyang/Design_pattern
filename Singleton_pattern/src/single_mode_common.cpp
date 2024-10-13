@@ -11,11 +11,10 @@ namespace lazy_style {
     class laze_test {
         // 虽然类中默认是private的可以不用显示声明private 但是声明出来代码阅读起来会更清晰
     private:
-        laze_test() {
-        }
+        // 如果没有什么特殊 可以使用default 构造函数
+        laze_test() = default;
 
-        ~laze_test() {
-        }
+        ~laze_test() = default;
 
         laze_test(const laze_test &) = delete;
 
@@ -58,11 +57,9 @@ lazy_style::laze_test *lazy_style::laze_test::instance = nullptr;
 namespace hungry_style {
     class hungry_test {
     private:
-        hungry_test() {
-        }
+        hungry_test() = default;
 
-        ~hungry_test() {
-        }
+        ~hungry_test() = default;
 
         hungry_test(const hungry_test &) = delete;
 
