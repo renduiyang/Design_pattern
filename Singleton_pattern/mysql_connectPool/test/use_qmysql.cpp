@@ -23,9 +23,9 @@ int main(int argc, char *argv[]) {
     qDebug() << "Database opened successfully";
     // 创建一个 QSqlQuery 对象
     QSqlQuery query(db);
-    query.prepare("select * from users;");
+    // query.prepare();
     // 这里表示查询成功
-    if (query.exec()) {
+    if (query.exec("select * from users;")) {
         qDebug() << query.record().count(); // 返回查询到的字段数
         qDebug() << query.size(); // 返回查询到的结果数(行数)
         for (int i = 0; i < query.record().count(); ++i) {
