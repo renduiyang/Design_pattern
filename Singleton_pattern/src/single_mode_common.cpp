@@ -29,6 +29,7 @@ namespace lazy_style {
                 std::lock_guard<std::mutex> guard(style_mutex);
                 // style_mutex.lock();
                 if (instance == nullptr) {
+                    //二重判断的原因 : 确保不会因为加锁期间多个线程同时进入
                     instance = new laze_test();
                 }
                 // style_mutex.unlock();
@@ -55,20 +56,21 @@ namespace lazy_style {
 lazy_style::laze_test *lazy_style::laze_test::instance = nullptr;
 
 namespace hungry_style {
-    class hungry_test {
+    class hungry_test_cite {
     private:
-        hungry_test() = default;
+        hungry_test_cite() = default;
 
-        ~hungry_test() = default;
+        ~hungry_test_cite() = default;
 
-        hungry_test(const hungry_test &) = delete;
+        hungry_test_cite(const hungry_test_cite &) = delete;
 
-        hungry_test &operator=(const hungry_test &) = delete;
+        hungry_test_cite &operator=(const hungry_test_cite &) = delete;
 
-        static hungry_test hungry_instance;
+        // 饿汉模式下 直接在类中直接声明了静态成员变量实例  后续请求时都是返回这个实例  因此一定是线程安全的
+        static hungry_test_cite hungry_instance;
 
     public:
-        static hungry_test &get_instance() {
+        static hungry_test_cite &get_instance() {
             return hungry_instance;
         }
 
@@ -76,17 +78,40 @@ namespace hungry_style {
             printf("address is %p \n", this);
             std::cout << "function name is   : " << __FUNCTION__ << std::endl;
             printf("__PRETTY_FUNCTION__ = %s\n", __PRETTY_FUNCTION__);
+        }
+    };
 
-            // Sample Output
-            // -------------------------------------------------
-            // 函数名  : exampleFunction
-            // 函数修饰: ? exampleFunction@@YAXXZ
-            // 函数签名 : void __cdecl exampleFunction(void)
+    class hungry_test_pointer {
+    private:
+        hungry_test_pointer() = default;
+
+        ~hungry_test_pointer() = default;
+
+        hungry_test_pointer(const hungry_test_pointer &) = delete;
+
+        hungry_test_pointer &operator=(const hungry_test_pointer &) = delete;
+
+        // 饿汉模式下 直接在类中直接声明了静态成员变量实例  后续
+        static hungry_test_pointer *hungry_instance_p;
+
+    public:
+        static hungry_test_pointer *get_instance() {
+            return hungry_instance_p;
+        }
+
+        void exampleFunction() {
+            printf("address is %p \n", this);
+            std::cout << "function name is   : " << __FUNCTION__ << std::endl;
+            printf("__PRETTY_FUNCTION__ = %s\n", __PRETTY_FUNCTION__);
         }
     };
 }
 
-hungry_style::hungry_test hungry_style::hungry_test::hungry_instance;
+hungry_style::hungry_test_cite hungry_style::hungry_test_cite::hungry_instance;
+
+// 本质上与引用类型一样  因为饿汉模式的指针必须在程序开始就初始化
+hungry_style::hungry_test_pointer *hungry_style::hungry_test_pointer::hungry_instance_p = new hungry_test_pointer();
+
 
 void demo1() {
     using namespace lazy_style;
@@ -97,9 +122,9 @@ void demo1() {
     std::cout << "lazy_instance == laze_instance2 is " << (lazy_instance == laze_instance2) << std::endl;
     laze_instance2->exampleFunction();
     printf("-------- \n");
-    hungry_test &hungry_instance = hungry_test::get_instance();
+    hungry_test_cite &hungry_instance = hungry_test_cite::get_instance();
     hungry_instance.exampleFunction();
-    hungry_test &hungry_instance2 = hungry_test::get_instance();
+    hungry_test_cite &hungry_instance2 = hungry_test_cite::get_instance();
     std::cout << "hungry_instance == hungry_instance2 is " << (&hungry_instance == &hungry_instance2) << std::endl;
     hungry_instance2.exampleFunction();
 }
