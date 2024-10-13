@@ -5,4 +5,6 @@
 #ifndef CONNPOOL_HPP
 #define CONNPOOL_HPP
 
+#include <MysqlConn.hpp>
+
 #endif //CONNPOOL_HPP

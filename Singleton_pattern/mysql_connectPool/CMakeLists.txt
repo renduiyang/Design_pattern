@@ -12,7 +12,7 @@ set(LIB_Name mysql_connect)
 
 file(GLOB_RECURSE mySourceFile CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
-file(GLOB_RECURSE mytestFile CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/*.cc)
+file(GLOB_RECURSE mytestFile CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp)
 
 message("file is ${mySourceFile}")
 
