@@ -6,26 +6,26 @@
 #include <thread>
 
 /**
- * @brief 静态局部变量的懒汉单例 这种线程安全的
+ * @brief 静态局部变量的懒汉单例 这种线程安全的(因为getInstance函数是被声明为static)
+ * @note 这是一种写法
+ * @note movzbl	guard variable for lazyStyle::getInstance()::instance(%rip), %eax 扩展守护变量
+ * @note leaq	guard variable for lazyStyle::getInstance()::instance(%rip), %rax 加载静态变量时 使用守护变量保护这个初始哈过程
+ * @note 在多线程环境中，静态局部变量的初始化需要保证线程安全。编译器通常会生成一些额外的代码来保护这个初始化过程。其中，“守护变量”（guard variable）是一种常见的方法。
  */
 class lazyStyle {
 public:
+    // 这个getInstance函数被声明为static，一定是线程安全的
     static lazyStyle &getInstance() {
         static lazyStyle instance;
         return instance;
     }
 
-    void myprint() {
-        printf_s("LazyStyle::myprint address is %p \n", this);
-        printf_s("LazyStyle::myprint size is %llu \n", sizeof(lazyStyle));
-    }
 
     void make_data() {
         for (int i = 0; i < 100; ++i) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 休眠1ms
             ++box_size; // 写入操作：counter自加
         }
-        // box_size++;
     }
 
     void chang_data(const int i) {
@@ -34,6 +34,11 @@ public:
         } else {
             box[0] = 100;
         }
+    }
+
+    void myprint() {
+        printf_s("LazyStyle::myprint address is %p \n", this);
+        printf_s("LazyStyle::myprint size is %llu \n", sizeof(lazyStyle));
     }
 
     void show_data() {
@@ -108,6 +113,9 @@ void demo2() {
 
 int main() {
     printf("main thread \n");
-    demo2();
+    for (int i = 0; i < 20; ++i) {
+        printf("-------- \n");
+        demo1();
+    }
     return 0;
 }
