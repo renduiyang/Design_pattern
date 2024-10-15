@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[]) {
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
-    db.setHostName("192.168.18.121"); // MySQL 服务器地址
+    db.setHostName("127.0.0.1"); // MySQL 服务器地址
     db.setDatabaseName("rdy_test"); // 数据库名称
     db.setUserName("root"); // 用户名
     db.setPassword("root"); // 密码
