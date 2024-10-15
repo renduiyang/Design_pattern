@@ -37,17 +37,31 @@ int main() {
         mysql_close(conn);
         exit(1);
     }
+    // 获取结果集行数(mysql_num_row返回值是unsigned long long ---> 可以用auto更简洁一些,但是auto导致代码阅读效果很差)
+    const unsigned long long find_number = mysql_num_rows(result);
+    printf("select number is %llu \n", find_number);
     // mysql一行数据句柄为 MYSQL_ROW ,Qt为QSqlRecord(QSqlQuery调用record函数即可)
-    MYSQL_ROW row;
     // 遍历每一行,mysql遍历每一行结果时借助 mysql_fetch_row 函数
-    while ((row = mysql_fetch_row(result))) {
+    MYSQL_ROW row;
+    //  mysql_fetch_row返回当前结果集的一行数据 可以理解为是一个指针  每调用一次 行数据指针向下移动一行
+    // 可以用for循环配合 mysql_num_rows函数使用
+    // 也可以直接使用while((row = mysql_fetch_row(result))来使用
+    // 补充!!! mysql_num_fields会输出一行数据中的列数
+    for (auto i = 0; i < find_number; i++) {
+        row = mysql_fetch_row(result);
         const int column_count = mysql_num_fields(result); // 获取一行数据中的列数
-        for (int i = 0; i < column_count; i++) {
-            printf_s("%s ", row[i]);
+        for (int j = 0; j < column_count; j++) {
+            printf_s("%s ", row[j]);
         }
         printf_s("\n");
-        // printf("%s %s\n", row[0], row[1]);
     }
+    // while ((row = mysql_fetch_row(result))) {
+    //     const int column_count = mysql_num_fields(result); // 获取一行数据中的列数
+    //     for (int i = 0; i < column_count; i++) {
+    //         printf_s("%s ", row[i]);
+    //     }
+    //     printf_s("\n");
+    // }
     // 释放结果集,mysql每次查询相当于把结果存放到结果集里,下一次查询前需要释放这个结果集
     mysql_free_result(result);
     mysql_close(conn);
