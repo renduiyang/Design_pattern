@@ -47,6 +47,13 @@ int main() {
     // 可以用for循环配合 mysql_num_rows函数使用
     // 也可以直接使用while((row = mysql_fetch_row(result))来使用
     // 补充!!! mysql_num_fields会输出一行数据中的列数
+    // mysql_fetch_field_direct(result,i)函数 获取指定索引字段信息
+    // MYSQL_FIELD 存储mysql结果集中每个字段相关信息
+    MYSQL_FIELD *field;
+    for (int i = 0; i < mysql_num_fields(result); ++i) {
+        field = mysql_fetch_field_direct(result, i);
+        std::cout << field->name << std::endl; // 输出字段名称
+    }
     for (auto i = 0; i < find_number; i++) {
         row = mysql_fetch_row(result);
         const int column_count = mysql_num_fields(result); // 获取一行数据中的列数

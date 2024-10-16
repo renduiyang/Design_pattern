@@ -15,6 +15,8 @@ file(GLOB_RECURSE mySourceFile CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src
 
 file(GLOB_RECURSE mytestFile CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp)
 
+file(GLOB_RECURSE myHSourceFile CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc)
+
 message("file is ${mySourceFile}")
 
 include_directories(${mysql_Path}/include)
@@ -26,7 +28,7 @@ if (goole_Test)
     link_directories(${goole_Test_Path}/lib)
     foreach (source IN ITEMS ${mytestFile})
         get_filename_component(name ${source} NAME_WLE)
-        add_executable(${name} ${source})
+        add_executable(${name} ${source} ${myHSourceFile})
         message("name is ${name}")
         target_link_libraries(${name} Qt5::Widgets Qt5::Sql Qt5::Core gmock gtest gtest_main mysql)
         enable_testing()
@@ -38,7 +40,7 @@ else ()
     message("no goole_test")
     foreach (source IN ITEMS ${mySourceFile})
         get_filename_component(name ${source} NAME_WLE)
-        add_executable(${name} ${source})
+        add_executable(${name} ${source} ${myHSourceFile})
         message("name is ${name}")
         target_link_libraries(${name} Qt5::Widgets Qt5::Sql Qt5::Core mysql)
     endforeach ()

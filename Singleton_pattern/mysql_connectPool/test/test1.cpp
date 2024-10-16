@@ -2,8 +2,8 @@
 // Created by renduiyang on 24-10-13.
 //
 #include <iostream>
-#include "MysqlConn.hpp"
-#include "ConnPool.hpp"
+#include "MysqlConn.h"
+#include "ConnPool.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

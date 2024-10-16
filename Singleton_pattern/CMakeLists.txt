@@ -4,6 +4,8 @@ project(factor_designer)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(src_path src)
 find_package(Qt5 COMPONENTS Widgets Core Sql REQUIRED)
 
