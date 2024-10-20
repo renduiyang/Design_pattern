@@ -37,6 +37,9 @@ MysqlConn::MysqlConn() {
  * @brief 析构函数
  */
 MysqlConn::~MysqlConn() {
+    if (m_connect != nullptr) {
+        mysql_close(m_connect);
+    }
     freeResult();
 }
 
