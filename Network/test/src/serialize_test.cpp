@@ -14,10 +14,18 @@ public:
     Person(const std::string &n, int a) : name(n), age(a) {
     }
 
-    // 序列化到字节流
+    /**
+     * @brief 序列化到字节流
+     * @return
+     * @note  这里使用uint8_t 有几个作用:首先uint8_t是8位使用 uint8_t 可以让你精确地处理每个字节，这对于需要严格控制数据布局的场景非常重要。
+     * @note 通过将数据转换为 uint8_t 数组，你可以直接访问和操作内存中的每一个字节，这对于低级别的数据处理非常有用。
+     */
     std::vector<uint8_t> serialize() const {
         std::vector<uint8_t> buffer;
         size_t nameLength = name.length();
+        // sizeof(size_t) 这个通常取决于平台
+        // 32位系统上sizeof(size_t) 为 4字节  32位
+        // 42
         buffer.insert(buffer.end(), (uint8_t *) &nameLength, (uint8_t *) &nameLength + sizeof(size_t));
         buffer.insert(buffer.end(), name.begin(), name.end());
         buffer.insert(buffer.end(), (uint8_t *) &age, (uint8_t *) &age + sizeof(int));
