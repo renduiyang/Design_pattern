@@ -8,7 +8,7 @@ set(Test 1)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 message("output path is ${CMAKE_CURRENT_SOURCE_DIR}/bin")
-
+include_directories(include)
 
 if (Client)
     add_subdirectory(client)
