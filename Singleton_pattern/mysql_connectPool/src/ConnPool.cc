@@ -8,6 +8,8 @@ ConnPool *ConnPool::getConnPool() {
     return &pool;
 }
 
+int ConnPool::creat_connect = 0;
+
 /**
  * @brief 从数据库连接池中取出一个连接,这里使用shared_ptr指针
  * @return
@@ -56,8 +58,8 @@ ConnPool::ConnPool() {
     m_user = "root";
     m_passwd = "root";
     m_dbName = "rdy_test";
-    m_maxSize = 20; // 最大连接数为20
-    m_minSize = 10; // 最小连接数为10
+    m_maxSize = 50; // 最大连接数为20
+    m_minSize = 25; // 最小连接数为10
     m_timeout = 10000; // 超时秒数为10秒
     m_maxIdleTime = 300000; // 最大空闲时间为5分钟
     for (int i = 0; i < m_minSize; i++) {
@@ -90,7 +92,7 @@ void ConnPool::produceConn() {
  */
 void ConnPool::releaseConn() {
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(30));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
         // 每隔1分钟检查一次
         std::lock_guard<std::mutex> m_lock(m_mutexQ);
         while (m_connQ.size() > m_minSize) {

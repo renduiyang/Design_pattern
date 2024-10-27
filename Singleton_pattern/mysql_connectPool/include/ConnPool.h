@@ -43,6 +43,4 @@ private:
     static int creat_connect;
 };
 
-int ConnPool::creat_connect = 0;
-
 #endif //CONNPOOL_H
