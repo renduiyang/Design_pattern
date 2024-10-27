@@ -25,7 +25,7 @@ public:
         size_t nameLength = name.length();
         // sizeof(size_t) 这个通常取决于平台
         // 32位系统上sizeof(size_t) 为 4字节  32位
-        // 42
+        // 64位系统上sizeof(size_t) 为 8字节  64位
         buffer.insert(buffer.end(), (uint8_t *) &nameLength, (uint8_t *) &nameLength + sizeof(size_t));
         buffer.insert(buffer.end(), name.begin(), name.end());
         buffer.insert(buffer.end(), (uint8_t *) &age, (uint8_t *) &age + sizeof(int));
