@@ -122,6 +122,8 @@ int main() {
     }
 
     // 开始监听
+    // 监听套接字的状态：一旦服务端调用了 listen(listenSock, backlog) 函数，listenSock 就进入了监听状态。
+    // 这意味着它会持续监听新的连接请求，并将这些请求放入内核维护的连接队列中。
     if (listen(listenSock, SOMAXCONN) == SOCKET_ERROR) {
         std::cerr << "listen failed: " << WSAGetLastError() << std::endl;
         closesocket(listenSock);
@@ -133,10 +135,13 @@ int main() {
 
     fd_set masterSet, readfds;
     FD_ZERO(&masterSet);
+    // 添加套接字 listenSocket到masterSet中
     FD_SET(listenSock, &masterSet);
+    // 设置当前maxFd
     int maxFd = listenSock;
 
     while (true) {
+        // 复制masterSet到readfds
         readfds = masterSet;
 
         // 使用select等待事件
@@ -166,6 +171,8 @@ int main() {
         }
 
         // 检查监听套接字是否有新的连接请求
+        // int FD_ISSET(int fd, fd_set *set);
+        // 如果 fd 文件描述符在 set 中被设置了，则 FD_ISSET 返回非零值（通常是1），否则返回0。
         if (FD_ISSET(listenSock, &readfds)) {
             sockaddr_in clientAddr;
             int clientAddrSize = sizeof(clientAddr);
