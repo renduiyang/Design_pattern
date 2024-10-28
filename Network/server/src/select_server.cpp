@@ -2,6 +2,7 @@
 #include <ws2tcpip.h>
 #include <iostream>
 #include <vector>
+#include <string>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -59,28 +60,54 @@ SOCKET CreateAndBindSocket(const char *port) {
 }
 
 // 处理客户端数据
-void HandleClientData(SOCKET clientSock) {
+void HandleClientData(SOCKET clientSock, fd_set &masterSet, int &maxFd) {
     char buffer[1024];
     int n = recv(clientSock, buffer, sizeof(buffer) - 1, 0);
     if (n > 0) {
         buffer[n] = '\0';
         std::cout << "Received from client: " << buffer << std::endl;
 
-        // 发送回显数据
-        if (strncmp(buffer, "HEARTBEAT", 9) == 0) {
-            const char *ack = "ACK";
-            send(clientSock, ack, strlen(ack), 0);
+        // 解析消息类型
+        std::string message(buffer);
+        size_t colonPos = message.find(':');
+        if (colonPos != std::string::npos) {
+            std::string messageType = message.substr(0, colonPos);
+            std::string data = message.substr(colonPos + 1);
+
+            if (messageType == "HEARTBEAT") {
+                // 发送回显数据
+                const char *ack = "ACK";
+                send(clientSock, ack, strlen(ack), 0);
+            } else if (messageType == "DATA") {
+                // 处理其他数据
+                std::cout << "Received data: " << data << std::endl;
+                // 可以在这里添加更多的数据处理逻辑
+            } else {
+                std::cerr << "Unknown message type: " << messageType << std::endl;
+            }
         } else {
-            send(clientSock, buffer, n, 0);
+            std::cerr << "Invalid message format: " << buffer << std::endl;
         }
     } else if (n == 0) {
         // 连接关闭
         std::cout << "Connection closed by client." << std::endl;
         closesocket(clientSock);
+        FD_CLR(clientSock, &masterSet); // 从集合中移除
+        if (clientSock == maxFd) {
+            while (maxFd > 0 && !FD_ISSET(maxFd, &masterSet)) {
+                --maxFd; // 更新最大文件描述符
+            }
+        }
     } else {
         // 接收错误
         std::cerr << "recv failed: " << WSAGetLastError() << std::endl;
         closesocket(clientSock);
+        FD_CLR(clientSock, &masterSet); // 从集合中移除
+        if (clientSock == maxFd) {
+            while (maxFd > 0 && !FD_ISSET(maxFd, &masterSet)) {
+                --maxFd; // 更新最大文件描述符
+            }
+        }
     }
 }
 
@@ -115,8 +142,27 @@ int main() {
         // 使用select等待事件
         int activity = select(maxFd + 1, &readfds, NULL, NULL, NULL);
         if (activity == SOCKET_ERROR) {
-            std::cerr << "select failed: " << WSAGetLastError() << std::endl;
-            break;
+            int error = WSAGetLastError();
+            std::cerr << "select failed: " << error << std::endl;
+
+            // 根据错误代码决定如何处理
+            if (error == WSAEINTR) {
+                // 被信号中断
+                std::cerr << "select was interrupted by a signal." << std::endl;
+                continue; // 重新尝试
+            } else if (error == WSAEINVAL) {
+                // 参数无效
+                std::cerr << "Invalid parameters for select." << std::endl;
+                break; // 终止循环
+            } else if (error == WSAENOTSOCK) {
+                // 文件描述符不是有效的套接字
+                std::cerr << "File descriptor is not a valid socket." << std::endl;
+                break; // 终止循环
+            } else {
+                // 其他未知错误
+                std::cerr << "Unknown error occurred in select." << std::endl;
+                break; // 终止循环
+            }
         }
 
         // 检查监听套接字是否有新的连接请求
@@ -141,7 +187,27 @@ int main() {
         for (int i = 0; i <= maxFd; ++i) {
             SOCKET sock = (SOCKET) i;
             if (sock != listenSock && FD_ISSET(sock, &readfds)) {
-                HandleClientData(sock);
+                try {
+                    HandleClientData(sock, masterSet, maxFd);
+                } catch (const std::exception &e) {
+                    std::cerr << "Exception caught in HandleClientData: " << e.what() << std::endl;
+                    closesocket(sock);
+                    FD_CLR(sock, &masterSet);
+                    if (sock == maxFd) {
+                        while (maxFd > 0 && !FD_ISSET(maxFd, &masterSet)) {
+                            --maxFd; // 更新最大文件描述符
+                        }
+                    }
+                } catch (...) {
+                    std::cerr << "Unknown exception caught in HandleClientData." << std::endl;
+                    closesocket(sock);
+                    FD_CLR(sock, &masterSet);
+                    if (sock == maxFd) {
+                        while (maxFd > 0 && !FD_ISSET(maxFd, &masterSet)) {
+                            --maxFd; // 更新最大文件描述符
+                        }
+                    }
+                }
             }
         }
     }
@@ -152,7 +218,9 @@ int main() {
             closesocket((SOCKET) i);
         }
     }
+    printf("end");
     closesocket(listenSock);
     WSACleanup();
+    system("pause");
     return 0;
 }

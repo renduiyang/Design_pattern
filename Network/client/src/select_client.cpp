@@ -18,7 +18,7 @@ void InitializeWinsock() {
 }
 
 // 连接到服务器
-SOCKET ConnectToServer(const char *ip, const char *port) {
+SOCKET ConnectToServer(const char* ip, const char* port) {
     struct addrinfo hints, *res, *p;
     int result;
 
@@ -42,7 +42,7 @@ SOCKET ConnectToServer(const char *ip, const char *port) {
         }
 
         // 尝试连接
-        if (connect(sockfd, p->ai_addr, (int) p->ai_addrlen) == SOCKET_ERROR) {
+        if (connect(sockfd, p->ai_addr, (int)p->ai_addrlen) == SOCKET_ERROR) {
             closesocket(sockfd);
             sockfd = INVALID_SOCKET;
             continue;
@@ -59,10 +59,10 @@ SOCKET ConnectToServer(const char *ip, const char *port) {
     return sockfd;
 }
 
-// 发送心跳包
-bool SendHeartbeat(SOCKET sockfd) {
-    const char *heartbeat = "HEARTBEAT";
-    int n = send(sockfd, heartbeat, strlen(heartbeat), 0);
+// 发送消息
+bool SendMessage(SOCKET sockfd, const std::string& messageType, const std::string& data) {
+    std::string message = messageType + ":" + data;
+    int n = send(sockfd, message.c_str(), message.length(), 0);
     if (n == SOCKET_ERROR) {
         std::cerr << "send failed: " << WSAGetLastError() << std::endl;
         return false;
@@ -92,13 +92,24 @@ bool ReceiveAck(SOCKET sockfd) {
 // 主循环
 void ClientLoop(SOCKET sockfd) {
     while (true) {
-        if (!SendHeartbeat(sockfd)) {
+        // 发送心跳包
+        if (!SendMessage(sockfd, "HEARTBEAT", "")) {
             std::cout << "Connection lost, attempting to reconnect..." << std::endl;
             closesocket(sockfd);
             sockfd = ConnectToServer("127.0.0.1", "8080");
             if (sockfd == INVALID_SOCKET) {
                 std::this_thread::sleep_for(std::chrono::seconds(5)); // 等待一段时间再重试
                 continue;
+            }
+        }
+
+        // 发送其他数据
+        if (!SendMessage(sockfd, "DATA", "Hello, Server!")) {
+            std::cout << "Failed to send data, connection may be lost." << std::endl;
+            closesocket(sockfd);
+            sockfd = ConnectToServer("127.0.0.1", "8080");
+            if (sockfd == INVALID_SOCKET) {
+                std::this_thread::sleep_for(std::chrono::seconds(5)); // 等待一段时间再重试
             }
         }
 
@@ -130,7 +141,7 @@ int main() {
     try {
         // 启动主循环
         ClientLoop(sockfd);
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         std::cerr << "Exception caught: " << e.what() << std::endl;
     } catch (...) {
         std::cerr << "Unknown exception caught." << std::endl;
