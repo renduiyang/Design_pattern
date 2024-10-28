@@ -136,6 +136,9 @@ int main() {
     fd_set masterSet, readfds;
     FD_ZERO(&masterSet);
     // 添加套接字 listenSocket到masterSet中
+    // 监听新连接：listenSock 是一个监听套接字，它用于监听客户端的连接请求。
+    // 当 select() 检测到 listenSock 可读时，这意味着有新的连接请求到来。
+    // 此时，服务器会调用 accept() 来接受这个连接。
     FD_SET(listenSock, &masterSet);
     // 设置当前maxFd
     int maxFd = listenSock;
@@ -173,6 +176,8 @@ int main() {
         // 检查监听套接字是否有新的连接请求
         // int FD_ISSET(int fd, fd_set *set);
         // 如果 fd 文件描述符在 set 中被设置了，则 FD_ISSET 返回非零值（通常是1），否则返回0。
+        // 如果 select() 返回并且 FD_ISSET(listenSock, &readfds) 为真，表示有新的连接请求到达。
+        //服务器调用 accept(listenSock, ...) 来接受新的连接，并返回一个新的已连接套接字 newSock
         if (FD_ISSET(listenSock, &readfds)) {
             sockaddr_in clientAddr;
             int clientAddrSize = sizeof(clientAddr);
@@ -182,6 +187,8 @@ int main() {
                 continue;
             }
 
+            //处理已连接的客户端：clientSock 是通过 accept() 从 listenSock 接受的新连接得到的已连接套接字。
+            //每个 clientSock 代表一个已经建立的连接，可以用来与特定的客户端进行通信。
             FD_SET(clientSock, &masterSet);
             if (clientSock > maxFd) {
                 maxFd = clientSock;
