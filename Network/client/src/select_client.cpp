@@ -28,6 +28,7 @@ SOCKET ConnectToServer(const char* ip, const char* port) {
     hints.ai_protocol = IPPROTO_TCP;
 
     // 解析服务器地址
+    // getaddrinfo会自动填充res指向的结构体
     result = getaddrinfo(ip, port, &hints, &res);
     if (result != 0) {
         std::cerr << "getaddrinfo failed: " << gai_strerror(result) << std::endl;
