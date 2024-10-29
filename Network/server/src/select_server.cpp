@@ -35,6 +35,8 @@ SOCKET CreateAndBindSocket(const char *port) {
     }
 
     SOCKET listenSock = INVALID_SOCKET;
+    // 使用addrinfo时配合getaddrinfo，使用for循环遍历所有可能的地址
+    // 这个用法类似遍历链表,socket和bind函数
     for (p = res; p != NULL; p = p->ai_next) {
         listenSock = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (listenSock == INVALID_SOCKET) {
