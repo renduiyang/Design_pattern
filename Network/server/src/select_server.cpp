@@ -83,6 +83,7 @@ void HandleClientData(SOCKET clientSock, fd_set &masterSet, int &maxFd) {
             } else if (messageType == "DATA") {
                 // 处理其他数据
                 std::cout << "Received data: " << data << std::endl;
+                send(clientSock, data.c_str(), data.length(), 0);
                 // 可以在这里添加更多的数据处理逻辑
             } else {
                 std::cerr << "Unknown message type: " << messageType << std::endl;

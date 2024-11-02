@@ -131,7 +131,7 @@ void HeartbeatThread(SOCKET sockfd, std::atomic<bool>& running, std::condition_v
 void ClientLoop(SOCKET sockfd, std::atomic<bool>& running) {
     while (running) {
         // 发送其他数据
-        if (!SendMessage(sockfd, "DATA:Hello, Server!")) {
+        if (!SendMessage(sockfd, "DATA: i am client2  GOOD !")) {
             std::cerr << "Failed to send data, connection may be lost." << std::endl;
             running = false;
             break;
