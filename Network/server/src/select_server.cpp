@@ -142,7 +142,7 @@ int main() {
     // 当 select() 检测到 listenSock 可读时，这意味着有新的连接请求到来。
     // 此时，服务器会调用 accept() 来接受这个连接。
     FD_SET(listenSock, &masterSet);
-    // 设置当前maxFd
+    // 设置当前maxFd 这个listenSock即为服务端本身,因此初始化maxFd为listenSock
     int maxFd = listenSock;
 
     while (true) {
@@ -150,7 +150,7 @@ int main() {
         readfds = masterSet;
 
         // 使用select等待事件
-        int activity = select(maxFd + 1, &readfds, NULL, NULL, NULL);
+        int activity = select(maxFd + 1, &readfds, nullptr, nullptr, nullptr);
         if (activity == SOCKET_ERROR) {
             int error = WSAGetLastError();
             std::cerr << "select failed: " << error << std::endl;
@@ -176,7 +176,7 @@ int main() {
         }
 
         // 检查监听套接字是否有新的连接请求
-        // int FD_ISSET(int fd, fd_set *set);
+        // int FD_ISSET(int fd, fd_set *set); 这个检查时是检查服务端有没有连上新的客户端
         // 如果 fd 文件描述符在 set 中被设置了，则 FD_ISSET 返回非零值（通常是1），否则返回0。
         // 如果 select() 返回并且 FD_ISSET(listenSock, &readfds) 为真，表示有新的连接请求到达。
         //服务器调用 accept(listenSock, ...) 来接受新的连接，并返回一个新的已连接套接字 newSock

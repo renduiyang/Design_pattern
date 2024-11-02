@@ -48,7 +48,7 @@ int main() {
     std::cout << "Server is listening on port 5555..." << std::endl;
 
     // 接受客户端连接
-    SOCKET clientSocket = accept(listenSocket, NULL, NULL);
+    SOCKET clientSocket = accept(listenSocket, nullptr, nullptr);
     if (clientSocket == INVALID_SOCKET) {
         std::cerr << "Accept failed with error code : " << WSAGetLastError() << std::endl;
         closesocket(listenSocket);
