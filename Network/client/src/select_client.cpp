@@ -8,6 +8,7 @@
 #include <condition_variable>
 #include <atomic>
 #include <queue>
+#include <conio.h> // 用于 _getch()
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -142,6 +143,21 @@ void MessageReceiverThread(SOCKET sockfd, std::atomic<bool>& running, std::queue
     }
 }
 
+// 键盘监听线程
+void KeyboardListenerThread(std::atomic<bool>& running) {
+    while (running) {
+        if (_kbhit()) { // 检测是否有按键输入
+            char key = _getch();
+            if (key == 27) { // 27 是 Esc 键的 ASCII 码
+                std::cout << "Esc key pressed. Closing client..." << std::endl;
+                running = false;
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 避免 CPU 占用过高
+    }
+}
+
 // 主循环
 void ClientLoop(SOCKET sockfd, std::atomic<bool>& running, std::queue<std::string>& messageQueue, std::mutex& queueMtx) {
     while (running) {
@@ -188,6 +204,9 @@ int main() {
     // 启动消息接收线程
     std::thread receiverThread(MessageReceiverThread, sockfd, std::ref(running), std::ref(messageQueue), std::ref(queueMtx));
 
+    // 启动键盘监听线程
+    std::thread keyboardThread(KeyboardListenerThread, std::ref(running));
+
     try {
         // 启动主循环
         ClientLoop(sockfd, running, messageQueue, queueMtx);
@@ -204,6 +223,9 @@ int main() {
 
     // 停止消息接收线程
     receiverThread.join();
+
+    // 停止键盘监听线程
+    keyboardThread.join();
 
     closesocket(sockfd);
     WSACleanup();
