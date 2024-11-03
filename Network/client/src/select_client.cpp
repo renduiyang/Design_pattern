@@ -7,6 +7,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <queue>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -127,8 +128,22 @@ void HeartbeatThread(SOCKET sockfd, std::atomic<bool>& running, std::condition_v
     }
 }
 
+// 消息接收线程
+void MessageReceiverThread(SOCKET sockfd, std::atomic<bool>& running, std::queue<std::string>& messageQueue, std::mutex& queueMtx) {
+    while (running) {
+        std::string message;
+        if (ReceiveMessage(sockfd, message)) {
+            std::lock_guard<std::mutex> lock(queueMtx);
+            messageQueue.push(message);
+        } else {
+            running = false;
+            break;
+        }
+    }
+}
+
 // 主循环
-void ClientLoop(SOCKET sockfd, std::atomic<bool>& running) {
+void ClientLoop(SOCKET sockfd, std::atomic<bool>& running, std::queue<std::string>& messageQueue, std::mutex& queueMtx) {
     while (running) {
         // 发送其他数据
         if (!SendMessage(sockfd, "DATA:Hello, Server!")) {
@@ -137,13 +152,14 @@ void ClientLoop(SOCKET sockfd, std::atomic<bool>& running) {
             break;
         }
 
-        std::string response;
-        if (ReceiveMessage(sockfd, response)) {
-            std::cout << "Data sent and response received: " << response << std::endl;
-        } else {
-            std::cerr << "No response received, connection may be lost." << std::endl;
-            running = false;
-            break;
+        // 处理消息队列
+        {
+            std::lock_guard<std::mutex> lock(queueMtx);
+            while (!messageQueue.empty()) {
+                std::string message = messageQueue.front();
+                messageQueue.pop();
+                std::cout << "Received from server: " << message << std::endl;
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(10)); // 每隔10秒发送一次数据
@@ -163,13 +179,18 @@ int main() {
     std::atomic<bool> running(true);
     std::condition_variable cv;
     std::mutex mtx;
+    std::queue<std::string> messageQueue;
+    std::mutex queueMtx;
 
     // 启动心跳包发送线程
     std::thread heartbeatThread(HeartbeatThread, sockfd, std::ref(running), std::ref(cv), std::ref(mtx));
 
+    // 启动消息接收线程
+    std::thread receiverThread(MessageReceiverThread, sockfd, std::ref(running), std::ref(messageQueue), std::ref(queueMtx));
+
     try {
         // 启动主循环
-        ClientLoop(sockfd, running);
+        ClientLoop(sockfd, running, messageQueue, queueMtx);
     } catch (const std::exception& e) {
         std::cerr << "Exception caught: " << e.what() << std::endl;
     } catch (...) {
@@ -180,6 +201,9 @@ int main() {
     running = false;
     cv.notify_all(); // 通知条件变量，使心跳线程退出
     heartbeatThread.join();
+
+    // 停止消息接收线程
+    receiverThread.join();
 
     closesocket(sockfd);
     WSACleanup();
