@@ -23,7 +23,7 @@ void InitializeWinsock() {
 }
 
 // 连接到服务器
-SOCKET ConnectToServer(const char* ip, const char* port) {
+SOCKET ConnectToServer(const char *ip, const char *port) {
     struct addrinfo hints, *res, *p;
     int result;
 
@@ -47,7 +47,7 @@ SOCKET ConnectToServer(const char* ip, const char* port) {
         }
 
         // 尝试连接
-        if (connect(sockfd, p->ai_addr, (int)p->ai_addrlen) == SOCKET_ERROR) {
+        if (connect(sockfd, p->ai_addr, (int) p->ai_addrlen) == SOCKET_ERROR) {
             closesocket(sockfd);
             sockfd = INVALID_SOCKET;
             continue;
@@ -65,7 +65,7 @@ SOCKET ConnectToServer(const char* ip, const char* port) {
 }
 
 // 发送消息
-bool SendMessage(SOCKET sockfd, const std::string& message) {
+bool SendMessage(SOCKET sockfd, const std::string &message) {
     int n = send(sockfd, message.c_str(), message.length(), 0);
     if (n == SOCKET_ERROR) {
         std::cerr << "send failed: " << WSAGetLastError() << std::endl;
@@ -75,7 +75,7 @@ bool SendMessage(SOCKET sockfd, const std::string& message) {
 }
 
 // 接收消息
-bool ReceiveMessage(SOCKET sockfd, std::string& message) {
+bool ReceiveMessage(SOCKET sockfd, std::string &message) {
     char buffer[1024];
     int n = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
     if (n > 0) {
@@ -104,7 +104,7 @@ bool ReceiveAck(SOCKET sockfd) {
 }
 
 // 心跳包发送线程
-void HeartbeatThread(SOCKET sockfd, std::atomic<bool>& running, std::condition_variable& cv, std::mutex& mtx) {
+void HeartbeatThread(SOCKET sockfd, std::atomic<bool> &running, std::condition_variable &cv, std::mutex &mtx) {
     std::unique_lock<std::mutex> lock(mtx);
     while (running) {
         cv.wait_for(lock, std::chrono::seconds(60)); // 每隔60秒发送一次心跳包
@@ -130,7 +130,8 @@ void HeartbeatThread(SOCKET sockfd, std::atomic<bool>& running, std::condition_v
 }
 
 // 消息接收线程
-void MessageReceiverThread(SOCKET sockfd, std::atomic<bool>& running, std::queue<std::string>& messageQueue, std::mutex& queueMtx) {
+void MessageReceiverThread(SOCKET sockfd, std::atomic<bool> &running, std::queue<std::string> &messageQueue,
+                           std::mutex &queueMtx) {
     while (running) {
         std::string message;
         if (ReceiveMessage(sockfd, message)) {
@@ -143,13 +144,25 @@ void MessageReceiverThread(SOCKET sockfd, std::atomic<bool>& running, std::queue
     }
 }
 
-// 键盘监听线程
-void KeyboardListenerThread(std::atomic<bool>& running) {
+// 用户输入处理线程
+void UserInputThread(SOCKET sockfd, std::atomic<bool> &running) {
     while (running) {
-        if (_kbhit()) { // 检测是否有按键输入
-            char key = _getch();
-            if (key == 27) { // 27 是 Esc 键的 ASCII 码
+        if (_kbhit()) {
+            // 检测是否有按键输入
+            char input[1024];
+            fgets(input, sizeof(input), stdin);
+            input[strcspn(input, "\n")] = 0; // 去掉换行符
+
+            if (input[0] == 27) {
+                // 27 是 Esc 键的 ASCII 码
                 std::cout << "Esc key pressed. Closing client..." << std::endl;
+                running = false;
+                break;
+            }
+
+            std::string message = "USER_INPUT:" + std::string(input);
+            if (!SendMessage(sockfd, message)) {
+                std::cerr << "Failed to send user input, connection may be lost." << std::endl;
                 running = false;
                 break;
             }
@@ -159,7 +172,8 @@ void KeyboardListenerThread(std::atomic<bool>& running) {
 }
 
 // 主循环
-void ClientLoop(SOCKET sockfd, std::atomic<bool>& running, std::queue<std::string>& messageQueue, std::mutex& queueMtx) {
+void ClientLoop(SOCKET sockfd, std::atomic<bool> &running, std::queue<std::string> &messageQueue,
+                std::mutex &queueMtx) {
     while (running) {
         // 发送其他数据
         if (!SendMessage(sockfd, "DATA:Hello, Server!")) {
@@ -185,49 +199,61 @@ void ClientLoop(SOCKET sockfd, std::atomic<bool>& running, std::queue<std::strin
 int main() {
     InitializeWinsock();
 
-    SOCKET sockfd = ConnectToServer("127.0.0.1", "8080");
-    if (sockfd == INVALID_SOCKET) {
-        std::cerr << "Failed to connect to the server. Exiting..." << std::endl;
-        WSACleanup();
-        return 1;
-    }
-
-    std::atomic<bool> running(true);
+    const char *serverIP = "127.0.0.1";
+    const char *serverPort = "8080";
+    SOCKET sockfd = INVALID_SOCKET;
+    std::atomic<bool> running(false);
     std::condition_variable cv;
     std::mutex mtx;
     std::queue<std::string> messageQueue;
     std::mutex queueMtx;
 
-    // 启动心跳包发送线程
-    std::thread heartbeatThread(HeartbeatThread, sockfd, std::ref(running), std::ref(cv), std::ref(mtx));
+    // 将客户端放入一个while循环当中,这个循环会让客户端陷入阻塞状态,直到用户按下ESC键为止
+    while (true) {
+        std::cout << "Attempting to connect to server at " << serverIP << ":" << serverPort << "..." << std::endl;
+        sockfd = ConnectToServer(serverIP, serverPort);
+        if (sockfd != INVALID_SOCKET) {
+            std::cout << "Connected to server successfully." << std::endl;
+            running = true;
 
-    // 启动消息接收线程
-    std::thread receiverThread(MessageReceiverThread, sockfd, std::ref(running), std::ref(messageQueue), std::ref(queueMtx));
+            // 启动心跳包发送线程
+            std::thread heartbeatThread(HeartbeatThread, sockfd, std::ref(running), std::ref(cv), std::ref(mtx));
 
-    // 启动键盘监听线程
-    std::thread keyboardThread(KeyboardListenerThread, std::ref(running));
+            // 启动消息接收线程
+            std::thread receiverThread(MessageReceiverThread, sockfd, std::ref(running), std::ref(messageQueue),
+                                       std::ref(queueMtx));
 
-    try {
-        // 启动主循环
-        ClientLoop(sockfd, running, messageQueue, queueMtx);
-    } catch (const std::exception& e) {
-        std::cerr << "Exception caught: " << e.what() << std::endl;
-    } catch (...) {
-        std::cerr << "Unknown exception caught." << std::endl;
+            // 启动用户输入处理线程
+            std::thread userInputThread(UserInputThread, sockfd, std::ref(running));
+
+            try {
+                // 启动主循环
+                ClientLoop(sockfd, running, messageQueue, queueMtx);
+            } catch (const std::exception &e) {
+                std::cerr << "Exception caught: " << e.what() << std::endl;
+            } catch (...) {
+                std::cerr << "Unknown exception caught." << std::endl;
+            }
+
+            // 停止心跳包发送线程
+            running = false;
+            cv.notify_all(); // 通知条件变量，使心跳线程退出
+            heartbeatThread.join();
+
+            // 停止消息接收线程
+            receiverThread.join();
+
+            // 停止用户输入处理线程
+            userInputThread.join();
+
+            closesocket(sockfd);
+            std::cout << "Disconnected from server. Attempting to reconnect..." << std::endl;
+        } else {
+            std::cout << "Failed to connect to server. Retrying in 5 seconds..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(5)); // 等待5秒后重试
+        }
     }
 
-    // 停止心跳包发送线程
-    running = false;
-    cv.notify_all(); // 通知条件变量，使心跳线程退出
-    heartbeatThread.join();
-
-    // 停止消息接收线程
-    receiverThread.join();
-
-    // 停止键盘监听线程
-    keyboardThread.join();
-
-    closesocket(sockfd);
     WSACleanup();
     return 0;
 }
