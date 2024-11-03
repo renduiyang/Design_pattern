@@ -80,7 +80,7 @@ void HandleClientData(SOCKET clientSock, fd_set &masterSet, int &maxFd) {
                 // 发送回显数据
                 const char *ack = "ACK";
                 send(clientSock, ack, strlen(ack), 0);
-            } else if (messageType == "DATA") {
+            } else if (messageType == "DATA" || messageType == "USER_INPUT") {
                 // 处理其他数据
                 std::cout << "Received data: " << data << std::endl;
                 send(clientSock, data.c_str(), data.length(), 0);

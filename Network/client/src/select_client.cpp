@@ -132,12 +132,31 @@ void HeartbeatThread(SOCKET sockfd, std::atomic<bool> &running, std::condition_v
 // 消息接收线程
 void MessageReceiverThread(SOCKET sockfd, std::atomic<bool> &running, std::queue<std::string> &messageQueue,
                            std::mutex &queueMtx) {
+    fd_set readfds;
+    timeval timeout;
     while (running) {
-        std::string message;
-        if (ReceiveMessage(sockfd, message)) {
-            std::lock_guard<std::mutex> lock(queueMtx);
-            messageQueue.push(message);
+        FD_ZERO(&readfds);
+        FD_SET(sockfd, &readfds);
+        timeout.tv_sec = 1; // 超时时间为1秒
+        timeout.tv_usec = 0;
+
+        int result = select((int) sockfd + 1, &readfds, nullptr, nullptr, &timeout);
+        if (result > 0 && FD_ISSET(sockfd, &readfds)) {
+            std::string message;
+            if (ReceiveMessage(sockfd, message)) {
+                if (message != "ACK") {
+                    std::lock_guard<std::mutex> lock(queueMtx);
+                    messageQueue.push(message);
+                    printf("put message queue is %s \n", message.c_str());
+                }
+            } else {
+                running = false;
+                break;
+            }
+        } else if (result == 0) {
+            // 超时，继续检查 running 标志
         } else {
+            std::cerr << "select failed: " << WSAGetLastError() << std::endl;
             running = false;
             break;
         }
@@ -153,9 +172,9 @@ void UserInputThread(SOCKET sockfd, std::atomic<bool> &running) {
             fgets(input, sizeof(input), stdin);
             input[strcspn(input, "\n")] = 0; // 去掉换行符
 
-            if (input[0] == 27) {
+            if (input[0] == 113) {
                 // 27 是 Esc 键的 ASCII 码
-                std::cout << "Esc key pressed. Closing client..." << std::endl;
+                std::cout << "q key pressed. Closing client..." << std::endl;
                 running = false;
                 break;
             }
@@ -188,7 +207,7 @@ void ClientLoop(SOCKET sockfd, std::atomic<bool> &running, std::queue<std::strin
             while (!messageQueue.empty()) {
                 std::string message = messageQueue.front();
                 messageQueue.pop();
-                std::cout << "Received from server: " << message << std::endl;
+                printf("cout message is %s \n", message.c_str());
             }
         }
 
@@ -208,7 +227,6 @@ int main() {
     std::queue<std::string> messageQueue;
     std::mutex queueMtx;
 
-    // 将客户端放入一个while循环当中,这个循环会让客户端陷入阻塞状态,直到用户按下ESC键为止
     while (true) {
         std::cout << "Attempting to connect to server at " << serverIP << ":" << serverPort << "..." << std::endl;
         sockfd = ConnectToServer(serverIP, serverPort);
@@ -247,7 +265,8 @@ int main() {
             userInputThread.join();
 
             closesocket(sockfd);
-            std::cout << "Disconnected from server. Attempting to reconnect..." << std::endl;
+            break;
+            // std::cout << "Disconnected from server. Attempting to reconnect..." << std::endl;
         } else {
             std::cout << "Failed to connect to server. Retrying in 5 seconds..." << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(5)); // 等待5秒后重试
