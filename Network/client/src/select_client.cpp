@@ -94,7 +94,8 @@ bool ReceiveMessage(SOCKET sockfd, std::string &message) {
 bool ReceiveAck(SOCKET sockfd) {
     std::string response;
     if (ReceiveMessage(sockfd, response)) {
-        if (response == "ACK") {
+        // ack与正常消息一样都是接收
+        if (!response.empty()) {
             return true; // 收到确认
         } else {
             std::cerr << "Unexpected response: " << response << std::endl;
